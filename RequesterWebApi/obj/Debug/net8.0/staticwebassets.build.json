@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "B10omgKjGY5Z4FZoJZJEJMPBgU0w6T82pt0/HF/xyU4=",
+  "Source": "RequesterWebApi",
+  "BasePath": "_content/RequesterWebApi",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
