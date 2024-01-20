@@ -9,26 +9,39 @@ Bu proje, MassTransit ve RabbitMQ kullanarak basit bir mesajlaşma sistemi örne
 Requester, RabbitMQ ile etkileşime girebilmek için MassTransit ve RabbitMQ yapılandırmasını içerir.
 
 ```csharp
-builder.Services.AddMassTransit(x =>
-{
-    x.AddBus(provider => Bus.Factory.CreateUsingRabbitMq(cfg =>
-    {
-        cfg.Host(new Uri("rabbitmq://localhost"), h =>
-        {
-            h.Username("guest");
-            h.Password("guest");
-        });
-    }));
 
-    // TestMessage için IRequestClient yapılandırması
-    x.AddRequestClient<TestMessage>(new Uri("queue:test_queue"));
-    x.AddMassTransitHostedService();
-});
+    public async Task<IActionResult> SendMessage([FromBody] TestMessage message)
+    {  
+        var (response, _) = await _requestClient.GetResponse<TestMessageResponse>(message);
+        return Ok(response.Message);
+    }
+    
+    public async Task<IActionResult> SendDynamicQueue([FromBody] TestMessage message)
+    {
+        // Gelen mesaja göre kuyruk adını belirle
+        var queueName = message.QueueName;
+    
+        // Yanıt beklemek için bir RequestClient oluştur
+        var requestClient = _bus.CreateRequestClient<TestMessage>(new Uri($"queue:{queueName}"));
+    
+        // Mesajı gönder ve yanıtı bekle
+        var (response, _) = await requestClient.GetResponse<TestMessageResponse>(message);
+    
+        return Ok(response.Message);
+    
+    }
 ```
 Consumer Web API'ler
 Her bir Consumer, farklı kuyrukları dinleyecek şekilde yapılandırılmıştır.
 
 ```csharp
+ public async Task Consume(ConsumeContext<TestMessage> context)
+        {
+            var messageText = context.Message.Text; 
+
+            await context.RespondAsync(new TestMessageResponse { ResponseText = "Queue 2 -> Received: " + messageText });
+        }
+
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<TestMessageConsumer>();
